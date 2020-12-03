@@ -8,7 +8,8 @@
 import UIKit
 import RealmSwift
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
+    
     
     let realm = try! Realm()
     var toDoItems: Results<Item>?
@@ -31,11 +32,13 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = toDoItems?[indexPath.row] {
+            
             cell.textLabel?.text = item.title
             cell.accessoryType = item.done ? .checkmark : .none
+            
         } else {
             cell.textLabel?.text = "No items added yet"
         }
@@ -69,7 +72,7 @@ class TodoListViewController: UITableViewController {
         
         var textField = UITextField()
         
-        let alert = UIAlertController(title: "Add New Todoey Item", message: nil, preferredStyle: .alert)
+        let alert = UIAlertController(title: "Add New Item", message: nil, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Add item", style: .default, handler: { (action) in
             
             if let currentCategory = self.selectedCategory {
@@ -119,6 +122,22 @@ class TodoListViewController: UITableViewController {
 
         tableView.reloadData()
     }
+    
+    // MARK: - Delete Data from Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        super.updateModel(at: indexPath)
+        
+        if let item = self.toDoItems?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(item)
+                }
+            } catch {
+                print("Error deleting category:: \(error)")
+            }
+        }
+    }
 }
 
 
@@ -135,6 +154,7 @@ extension TodoListViewController: UISearchBarDelegate {
     }
 
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
         if searchBar.text?.count == 0 {
             loadItems()
 

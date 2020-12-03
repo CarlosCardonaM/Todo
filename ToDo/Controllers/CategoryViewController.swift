@@ -8,30 +8,29 @@
 import UIKit
 import RealmSwift
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     let realm = try! Realm()
     
     var categories: Results<Category>?
-//    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
+        
+        tableView.rowHeight = 80
     }
     
     // MARK: - TableView Datasource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
-        /// Nil Coalescing Operator
         return categories?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath)
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories added yet"
         
         return cell
@@ -81,7 +80,7 @@ class CategoryViewController: UITableViewController {
         present(alert, animated: true)
     }
     
-    // MARK: - TableView Manipulation Methods
+    // MARK: - Data Manipulation Methods
     
     func save(category: Category) {
         
@@ -95,10 +94,27 @@ class CategoryViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
+    
     func loadCategories() {
         
         categories = realm.objects(Category.self)
         
         tableView.reloadData()
+    }
+    
+    // MARK: - Delete Data from Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        super.updateModel(at: indexPath)
+        
+        if let category = self.categories?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(category)
+                }
+            } catch {
+                print("Error deleting category:: \(error)")
+            }
+        }
     }
 }
